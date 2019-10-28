@@ -26,7 +26,6 @@ const router = express.Router();
  */
 
 router.post('/', function(req, res, next) {
-
   let error = false;
   let validCalculation = true;
   let errorMessage = '';
@@ -49,7 +48,7 @@ router.post('/', function(req, res, next) {
     errorMessage: errorMessage,
     validCalculation: validCalculation
   }
-
+  
   res.json(response)
 });
 

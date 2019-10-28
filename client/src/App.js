@@ -141,29 +141,57 @@ class App extends Component {
 
   validatedInput = (field) => {
     if (field === this.state.monthlyString) {
-      if ((this.state.numberOfMonthlyPayments < this.state.boundaries.monthlyPayments.bottom && this.state.numberOfMonthlyPayments !== '') || (this.state.numberOfMonthlyPayments > this.state.boundaries.monthlyPayments.top && this.state.numberOfMonthlyPayments !== '')) {
+      if (this.isTermValueInvalid()) {
         this.setState({ termValueHasErrors: true, termLabel: labels.termLabel.error })
       } else {
-        this.setState({ termValueHasErrors: false, termLabel: labels.termLabel.default })    
+        this.setState({ termValueHasErrors: false, termLabel: labels.termLabel.default })
       }
     } else {
-      if ((this.state.amountFinanced < this.state.boundaries.amountFinanced.bottom && this.state.amountFinanced !== '') || (this.state.amountFinanced > this.state.boundaries.amountFinanced.top && this.state.amountFinanced !== '')) {
+      if (this.isAmountFinancedInvalid()) {
         this.setState({ amountFinancedHasErrors: true, amountFinancedLabel: labels.amountFinancedLabel.error })
       } else {
         this.setState({ amountFinancedHasErrors: false, amountFinancedLabel: labels.amountFinancedLabel.default })    
       }
     }
   }
+  
+  isTermValueInvalid = () => {
+    return ((this.state.numberOfMonthlyPayments < this.state.boundaries.monthlyPayments.bottom 
+                  && this.state.numberOfMonthlyPayments !== '') 
+                  || (this.state.numberOfMonthlyPayments > this.state.boundaries.monthlyPayments.top 
+                  && this.state.numberOfMonthlyPayments !== ''))
+  }
+
+  isAmountFinancedInvalid = () => {
+    return ((this.state.amountFinanced <= this.state.boundaries.amountFinanced.bottom 
+                  && this.state.amountFinanced !== '') 
+                  || (this.state.amountFinanced >= this.state.boundaries.amountFinanced.top 
+                  && this.state.amountFinanced !== ''))
+  }
 
   shouldInteractionBeDisabled = (value) => {
     let amount;
+    let boundary;
 
     if(value === this.state.monthlyString) {
       amount = this.state.monthlyPaymentAmount;
+      boundary = {
+        bottom: 0,
+        top: 10000
+      }
     } else {
       amount = this.state.amountFinanced;
+      boundary = {
+        bottom: this.state.boundaries.amountFinanced.bottom,
+        top: this.state.boundaries.amountFinanced.top
+      }
     }
-    return amount && this.state.numberOfMonthlyPayments && this.state.numberOfMonthlyPayments >= this.state.boundaries.monthlyPayments.bottom && this.state.numberOfMonthlyPayments <= this.state.boundaries.monthlyPayments.top && !this.state.applicationLocked;
+    return amount && this.state.numberOfMonthlyPayments
+                  && amount > boundary.bottom
+                  && amount < boundary.top
+                  && this.state.numberOfMonthlyPayments > this.state.boundaries.monthlyPayments.bottom 
+                  && this.state.numberOfMonthlyPayments < this.state.boundaries.monthlyPayments.top 
+                  && !this.state.applicationLocked;
   }
 
   render() {
@@ -176,17 +204,6 @@ class App extends Component {
           <p>
             {strings.newApplicationString}
           </p>
-{/*         <div className={`${!this.state.applicationLocked ? 'hidden' : ''}`}>
-          <Button 
-            variant="contained" 
-            color="default" 
-            startIcon={<RedoIcon />} 
-            fullWidth
-            disabled={!this.state.applicationLocked}
-            onClick={this.resetApplication}>
-              {strings.newApplication}
-            </Button>
-        </div>  */}
         </div>
         <div className="input-container heading"><h2>{strings.heading}</h2></div>
         <div className="input-container">

@@ -26,7 +26,6 @@ var router = express.Router();
  */
 
 router.post('/', function(req, res, next) {
-
     var error = false;
     var validCalculation = true;
     var errorMessage = '';
