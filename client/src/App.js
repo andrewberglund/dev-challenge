@@ -189,8 +189,8 @@ class App extends Component {
     return amount && this.state.numberOfMonthlyPayments
                   && amount > boundary.bottom
                   && amount < boundary.top
-                  && this.state.numberOfMonthlyPayments > this.state.boundaries.monthlyPayments.bottom 
-                  && this.state.numberOfMonthlyPayments < this.state.boundaries.monthlyPayments.top 
+                  && this.state.numberOfMonthlyPayments >= this.state.boundaries.monthlyPayments.bottom 
+                  && this.state.numberOfMonthlyPayments <= this.state.boundaries.monthlyPayments.top 
                   && !this.state.applicationLocked;
   }
 
