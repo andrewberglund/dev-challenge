@@ -1,6 +1,7 @@
-import React, { Component } from 'react';
+import * as React from 'react';
 import { calculateAmountFinanced, calculateMonthlyPaymentAmount } from './actions/calculate';
 import { strings, labels, placeholders } from './infrastructure/constants';
+import { CalculationState, CalculationProps, CalculationResult, Boundary } from './interface/index';
 import IconButton from '@material-ui/core/IconButton';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
@@ -16,7 +17,7 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import './App.css';
 
-const initialState = {
+const initialState: CalculationState = {
   amountFinanced: '',
   numberOfMonthlyPayments: '',
   monthlyPaymentAmount: '',
@@ -34,7 +35,6 @@ const initialState = {
   applicationLocked: false,
   snackBar: {
     open: false,
-    variant: '',
     vertical: 'bottom',
     horizontal: 'center',
   },
@@ -50,8 +50,8 @@ const initialState = {
   }
 }
 
-class App extends Component {
-  constructor(props) {
+class App extends React.Component<CalculationProps, CalculationState> {
+  constructor(props: CalculationProps) {
     super(props);
     this.state = initialState;
 
@@ -63,10 +63,10 @@ class App extends Component {
     this.submitApplication = this.submitApplication.bind(this);
   }
 
-   calculate = async (event) => {
-    const calculationId = event.target.id;
-    let resultAmount;
-      if(calculationId === this.state.monthlyString) {
+   calculate = async (event: React.MouseEvent<HTMLButtonElement>): Promise<void> => {
+    const calculationElementId: string = event.currentTarget.id;
+    let resultAmount: CalculationResult;
+      if(calculationElementId === this.state.monthlyString) {
         resultAmount = await calculateAmountFinanced(this.state.numberOfMonthlyPayments, this.state.monthlyPaymentAmount);
         this.setState({
           amountFinanced: resultAmount.result,
@@ -77,7 +77,6 @@ class App extends Component {
           amountFinancedLabel: resultAmount.error ? labels.amountFinancedLabel.error : labels.amountFinancedLabel.default,
           snackBar: {
             open: resultAmount.error ? true : false,
-            variant: 'error'
           }
         })
       } else {
@@ -90,44 +89,50 @@ class App extends Component {
           validCalculation: resultAmount.validCalculation,
           snackBar: {
             open: resultAmount.error ? true : false,
-            variant: 'error'
           }
         })
       }
    }
 
-  submitApplication = () => {
+  submitApplication = (): void => {
     this.setState({ isModalOpen: true });
   }
 
-  resetApplication = () => {
+  resetApplication = (): void => {
     this.setState(initialState);
   }
 
-  updateNumberOfMonthlyPayments = async (event) => {
-    event.preventDefault(); 
+  onlyAllowNumbers = (value: string): string => {
+    return value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+  }
+
+  updateNumberOfMonthlyPayments = async (event: {}): Promise<void> => {
+    const e = event as React.ChangeEvent<HTMLInputElement>;
+    e.preventDefault();
     await this.setState({
-      numberOfMonthlyPayments: event.target.value.replace(' ', ''),
+      numberOfMonthlyPayments: this.onlyAllowNumbers(e.currentTarget.value),
     })
     await this.validatedInput(this.state.monthlyString);
   }
 
-  updateAmountFinanced = async (event) => {
-    event.preventDefault();
+  updateAmountFinanced = async (event: {}): Promise<void> => {
+    const e = event as React.ChangeEvent<HTMLInputElement>;
+    e.preventDefault();
     await this.setState({
-      amountFinanced: event.target.value.replace(' ', ''),
+      amountFinanced: this.onlyAllowNumbers(e.target.value),
     })
     await this.validatedInput(this.state.amountFinancedString);
   }
 
-  updateMonthlyPaymentAmount = async (event) => {
-    event.preventDefault();
+  updateMonthlyPaymentAmount = async (event: {}): Promise<void> => {
+    const e = event as React.ChangeEvent<HTMLInputElement>;
+    e.preventDefault();
     await this.setState({
-      monthlyPaymentAmount: event.target.value.replace(' ', ''),
+      monthlyPaymentAmount: this.onlyAllowNumbers(e.target.value),
     })
   }
 
-  handleSnackBarClose = () => {
+  handleSnackBarClose = (): void => {
     this.setState({
       snackBar: {
         open: false
@@ -135,11 +140,11 @@ class App extends Component {
     })
   }
   
-  handleModalClose = () => {
+  handleModalClose = (): void => {
     this.setState({ isModalOpen: false, applicationLocked: true })
   }
 
-  validatedInput = (field) => {
+  validatedInput = (field: string): void => {
     if (field === this.state.monthlyString) {
       if (this.isTermValueInvalid()) {
         this.setState({ termValueHasErrors: true, termLabel: labels.termLabel.error })
@@ -155,23 +160,23 @@ class App extends Component {
     }
   }
   
-  isTermValueInvalid = () => {
+  isTermValueInvalid = (): boolean => {
     return ((this.state.numberOfMonthlyPayments < this.state.boundaries.monthlyPayments.bottom 
                   && this.state.numberOfMonthlyPayments !== '') 
                   || (this.state.numberOfMonthlyPayments > this.state.boundaries.monthlyPayments.top 
                   && this.state.numberOfMonthlyPayments !== ''))
   }
 
-  isAmountFinancedInvalid = () => {
+  isAmountFinancedInvalid = (): boolean => {
     return ((this.state.amountFinanced <= this.state.boundaries.amountFinanced.bottom 
                   && this.state.amountFinanced !== '') 
                   || (this.state.amountFinanced >= this.state.boundaries.amountFinanced.top 
                   && this.state.amountFinanced !== ''))
   }
 
-  shouldInteractionBeDisabled = (value) => {
-    let amount;
-    let boundary;
+  shouldInteractionBeDisabled = (value: string): boolean => {
+    let amount: number;
+    let boundary: Boundary;
 
     if(value === this.state.monthlyString) {
       amount = this.state.monthlyPaymentAmount;
@@ -293,7 +298,6 @@ class App extends Component {
           key={`${this.state.snackBar.vertical},${this.state.snackBar.horizontal}`}
           open={this.state.snackBar.open}
           onClose={this.handleSnackBarClose}
-          variant="error"
           message={<span id="message-id">{this.state.errorMessage}</span>}
         />
         <Dialog
