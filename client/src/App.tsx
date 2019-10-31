@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { calculateAmountFinanced, calculateMonthlyPaymentAmount } from './actions/calculate';
+import { fetchCalculation } from './actions/calculate';
 import { strings, labels, placeholders } from './infrastructure/constants';
 import { CalculationState, CalculationProps, CalculationResult, Boundary } from './interface/index';
 import IconButton from '@material-ui/core/IconButton';
@@ -22,6 +22,7 @@ const initialState: CalculationState = {
   numberOfMonthlyPayments: '',
   monthlyPaymentAmount: '',
   monthlyString: strings.monthlyString,
+  termString: strings.termString,
   amountFinancedString: strings.amountFinancedString,
   termLabel: labels.termLabel.default,
   monthlyAmountLabel: labels.monthlyAmountLabel,
@@ -56,8 +57,7 @@ class App extends React.Component<CalculationProps, CalculationState> {
     this.state = initialState;
 
     this.calculate = this.calculate.bind(this);
-    this.updateNumberOfMonthlyPayments = this.updateNumberOfMonthlyPayments.bind(this);
-    this.updateAmountFinanced = this.updateAmountFinanced.bind(this);
+    this.updateInputFieldValue = this.updateInputFieldValue.bind(this);
     this.handleSnackBarClose = this.handleSnackBarClose.bind(this);
     this.handleModalClose = this.handleModalClose.bind(this);
     this.submitApplication = this.submitApplication.bind(this);
@@ -66,32 +66,22 @@ class App extends React.Component<CalculationProps, CalculationState> {
    calculate = async (event: React.MouseEvent<HTMLButtonElement>): Promise<void> => {
     const calculationElementId: string = event.currentTarget.id;
     let resultAmount: CalculationResult;
-      if(calculationElementId === this.state.monthlyString) {
-        resultAmount = await calculateAmountFinanced(this.state.numberOfMonthlyPayments, this.state.monthlyPaymentAmount);
-        this.setState({
-          amountFinanced: resultAmount.result,
-          error: resultAmount.error,
-          errorMessage: resultAmount.errorMessage,
-          amountFinancedHasErrors: resultAmount.error,
-          validCalculation: resultAmount.validCalculation,
-          amountFinancedLabel: resultAmount.error ? labels.amountFinancedLabel.error : labels.amountFinancedLabel.default,
-          snackBar: {
-            open: resultAmount.error ? true : false,
-          }
-        })
-      } else {
-        resultAmount = await calculateMonthlyPaymentAmount(this.state.numberOfMonthlyPayments, this.state.amountFinanced);
-        this.setState({
-          monthlyPaymentAmount: resultAmount.result,
-          error: resultAmount.error,
-          errorMessage: resultAmount.errorMessage,
-          amountFinancedHasErrors: resultAmount.error,
-          validCalculation: resultAmount.validCalculation,
-          snackBar: {
-            open: resultAmount.error ? true : false,
-          }
-        })
+    const calculationContext: string = calculationElementId === this.state.monthlyString ? strings.monthlyString : strings.amountFinancedString;
+    const stateVariableToAlter: string = calculationContext === this.state.monthlyString ? strings.amountFinancedString : strings.monthlyString;
+
+    resultAmount = await fetchCalculation(this.state.numberOfMonthlyPayments, this.state.amountFinanced, this.state.monthlyPaymentAmount, calculationContext);
+    
+    this.setState<never>({
+      [stateVariableToAlter]: resultAmount.result,
+      error: resultAmount.error,
+      errorMessage: resultAmount.errorMessage,
+      amountFinancedHasErrors: resultAmount.error,
+      validCalculation: resultAmount.validCalculation,
+      amountFinancedLabel: resultAmount.error && calculationContext === strings.monthlyString ? labels.amountFinancedLabel.error : labels.amountFinancedLabel.default,
+      snackBar: {
+        open: resultAmount.error ? true : false,
       }
+    })
    }
 
   submitApplication = (): void => {
@@ -106,30 +96,14 @@ class App extends React.Component<CalculationProps, CalculationState> {
     return value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
   }
 
-  updateNumberOfMonthlyPayments = async (event: {}): Promise<void> => {
+  updateInputFieldValue = async (event: {}): Promise<void> => {
     const e = event as React.ChangeEvent<HTMLInputElement>;
-    e.preventDefault();
-    await this.setState({
-      numberOfMonthlyPayments: this.onlyAllowNumbers(e.currentTarget.value),
+    e.persist();
+    const { value, name } = e.target;
+    await this.setState<never>({
+      [name]: this.onlyAllowNumbers(value),
     })
-    await this.validatedInput(this.state.monthlyString);
-  }
-
-  updateAmountFinanced = async (event: {}): Promise<void> => {
-    const e = event as React.ChangeEvent<HTMLInputElement>;
-    e.preventDefault();
-    await this.setState({
-      amountFinanced: this.onlyAllowNumbers(e.target.value),
-    })
-    await this.validatedInput(this.state.amountFinancedString);
-  }
-
-  updateMonthlyPaymentAmount = async (event: {}): Promise<void> => {
-    const e = event as React.ChangeEvent<HTMLInputElement>;
-    e.preventDefault();
-    await this.setState({
-      monthlyPaymentAmount: this.onlyAllowNumbers(e.target.value),
-    })
+    this.valiedateInput(name);
   }
 
   handleSnackBarClose = (): void => {
@@ -144,34 +118,32 @@ class App extends React.Component<CalculationProps, CalculationState> {
     this.setState({ isModalOpen: false, applicationLocked: true })
   }
 
-  validatedInput = (field: string): void => {
-    if (field === this.state.monthlyString) {
-      if (this.isTermValueInvalid()) {
-        this.setState({ termValueHasErrors: true, termLabel: labels.termLabel.error })
-      } else {
-        this.setState({ termValueHasErrors: false, termLabel: labels.termLabel.default })
-      }
+  valiedateInput = (field: string): void => {
+    const validationContext: string = field === this.state.termString ? this.state.termString : this.state.amountFinancedString;
+    const stateVariablesToAlter = {
+      valueHasErrors: validationContext === this.state.termString ? 'termValueHasErrors' : 'amountFinancedHasErrors',
+      labelString: validationContext === this.state.termString ? 'termLabel' : 'amountFinancedLabel',
+      labelValue: validationContext === this.state.termString ? labels.termLabel : labels.amountFinancedLabel
+    }
+
+    if(this.isInputValueInvalid(validationContext)) {
+      this.setState<never>({ [stateVariablesToAlter.valueHasErrors]: true, [stateVariablesToAlter.labelString]: stateVariablesToAlter.labelValue.error })
     } else {
-      if (this.isAmountFinancedInvalid()) {
-        this.setState({ amountFinancedHasErrors: true, amountFinancedLabel: labels.amountFinancedLabel.error })
-      } else {
-        this.setState({ amountFinancedHasErrors: false, amountFinancedLabel: labels.amountFinancedLabel.default })    
-      }
+      this.setState<never>({ [stateVariablesToAlter.valueHasErrors]: false, [stateVariablesToAlter.labelString]: stateVariablesToAlter.labelValue.default })
     }
   }
   
-  isTermValueInvalid = (): boolean => {
-    return ((this.state.numberOfMonthlyPayments < this.state.boundaries.monthlyPayments.bottom 
-                  && this.state.numberOfMonthlyPayments !== '') 
-                  || (this.state.numberOfMonthlyPayments > this.state.boundaries.monthlyPayments.top 
-                  && this.state.numberOfMonthlyPayments !== ''))
-  }
-
-  isAmountFinancedInvalid = (): boolean => {
-    return ((this.state.amountFinanced <= this.state.boundaries.amountFinanced.bottom 
-                  && this.state.amountFinanced !== '') 
-                  || (this.state.amountFinanced >= this.state.boundaries.amountFinanced.top 
-                  && this.state.amountFinanced !== ''))
+  isInputValueInvalid = (inputValueToValidate: string): boolean => {
+    
+    const stateVariableToValidate = {
+      fieldToValidate: inputValueToValidate === this.state.termString ? this.state.numberOfMonthlyPayments : this.state.amountFinanced,
+      fieldBoundary: inputValueToValidate === this.state.termString ? this.state.boundaries.monthlyPayments : this.state.boundaries.amountFinanced
+    }
+    
+    return ((stateVariableToValidate.fieldToValidate < stateVariableToValidate.fieldBoundary.bottom 
+                  && stateVariableToValidate.fieldToValidate !== '') 
+                  || (stateVariableToValidate.fieldToValidate > stateVariableToValidate.fieldBoundary.top 
+                  && stateVariableToValidate.fieldToValidate !== ''))
   }
 
   shouldInteractionBeDisabled = (value: string): boolean => {
@@ -216,8 +188,9 @@ class App extends React.Component<CalculationProps, CalculationState> {
             label={this.state.termLabel} 
             placeholder={placeholders.term} 
             fullWidth variant="outlined" 
+            name={this.state.termString}
             value={this.state.numberOfMonthlyPayments} 
-            onChange={this.updateNumberOfMonthlyPayments}
+            onChange={this.updateInputFieldValue}
             disabled={this.state.applicationLocked}
             inputProps={{
               maxLength:2,
@@ -230,8 +203,9 @@ class App extends React.Component<CalculationProps, CalculationState> {
             label={this.state.amountFinancedLabel} 
             placeholder={placeholders.amountFinanced}
             fullWidth variant="outlined"
+            name={this.state.amountFinancedString}
             value={this.state.amountFinanced} 
-            onChange={this.updateAmountFinanced}
+            onChange={this.updateInputFieldValue}
             disabled={this.state.applicationLocked}
             inputProps={{
               maxLength:6,
@@ -254,8 +228,9 @@ class App extends React.Component<CalculationProps, CalculationState> {
             label={this.state.monthlyAmountLabel} 
             fullWidth 
             variant="outlined" 
+            name={this.state.monthlyString}
             value={this.state.monthlyPaymentAmount} 
-            onChange={this.updateMonthlyPaymentAmount}
+            onChange={this.updateInputFieldValue}
             disabled={this.state.applicationLocked}
             inputProps={{
               maxLength:4,

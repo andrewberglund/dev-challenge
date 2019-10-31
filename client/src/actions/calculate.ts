@@ -1,13 +1,17 @@
 import { CalculationResult, CalculationPayload } from '../interface/index';
 import { calculateAmountFinancedEndpoint, calculateMonthlyPaymentAmountEndoint } from '../infrastructure/endpoints';
+import { strings } from '../infrastructure/constants';
 
-export async function calculateMonthlyPaymentAmount(months: number, amountFinanced: number): Promise<CalculationResult> {
+export async function fetchCalculation(months: number, amountFinanced: number, monthlyAmount: number, calculationContext: string): Promise<CalculationResult> {
     const data: CalculationPayload = {
       term: months,
-      amountFinanced: amountFinanced
+      amountFinanced: amountFinanced,
+      monthly: monthlyAmount,
     };
 
-    const response = await fetch(calculateMonthlyPaymentAmountEndoint, {
+    const fetchUrl = calculationContext === strings.amountFinancedString ? calculateMonthlyPaymentAmountEndoint : calculateAmountFinancedEndpoint;
+
+    const response = await fetch(fetchUrl, {
       method: 'POST',
       headers: {
       'Content-Type': 'application/json' 
@@ -18,23 +22,4 @@ export async function calculateMonthlyPaymentAmount(months: number, amountFinanc
       const result:Promise<CalculationResult> = response.json();
 
   return result;
-}
-
-export async function calculateAmountFinanced(months: number, monthlyAmount: number): Promise<CalculationResult> {
-      const data: CalculationPayload = {
-        term: months,
-        monthly: monthlyAmount
-      };
-  
-      const response = await fetch(calculateAmountFinancedEndpoint, {
-        method: 'POST',
-        headers: {
-        'Content-Type': 'application/json' 
-        },
-        body: JSON.stringify(data)
-      });
-  
-      const result: Promise<CalculationResult> = response.json();
-
-    return result;
 }

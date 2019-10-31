@@ -1,2 +1,2 @@
 export const calculateMonthlyPaymentAmountEndoint = 'http://localhost:9000/calculateMonthlyPaymentAmount';
-export const calculateAmountFinancedEndpoint = 'http://localhost:9000/calculateAmountFinanced'
+export const calculateAmountFinancedEndpoint = 'http://localhost:9000/calculateAmountFinanced';

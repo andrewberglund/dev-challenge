@@ -3,6 +3,7 @@ export interface CalculationState {
     numberOfMonthlyPayments: any;
     monthlyPaymentAmount: any;
     monthlyString: string;
+    termString: string;
     amountFinancedString: string;
     termLabel: string;
     monthlyAmountLabel: string;
