@@ -19,7 +19,7 @@ export async function fetchCalculation(months: number, amountFinanced: number, m
       body: JSON.stringify(data)
     });
 
-      const result:Promise<CalculationResult> = response.json();
+      const result: Promise<CalculationResult> = response.json();
 
   return result;
 }

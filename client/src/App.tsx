@@ -2,19 +2,8 @@ import * as React from 'react';
 import { fetchCalculation } from './actions/calculate';
 import { strings, labels, placeholders } from './infrastructure/constants';
 import { CalculationState, CalculationProps, CalculationResult, Boundary } from './interface/index';
-import IconButton from '@material-ui/core/IconButton';
-import TextField from '@material-ui/core/TextField';
-import Button from '@material-ui/core/Button';
-import CloudUploadIcon from '@material-ui/icons/CloudUpload';
-import FunctionsOutlinedIcon from '@material-ui/icons/FunctionsOutlined';
-import RedoIcon from '@material-ui/icons/Redo';
-import Snackbar from '@material-ui/core/Snackbar';
-import InputAdornment from '@material-ui/core/InputAdornment';
-import Dialog from '@material-ui/core/Dialog';
-import DialogActions from '@material-ui/core/DialogActions';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
-import DialogTitle from '@material-ui/core/DialogTitle';
+import { IconButton, TextField, Button, Snackbar, Dialog, DialogContent, DialogActions, DialogTitle, DialogContentText, InputAdornment } from '@material-ui/core';
+import { CloudUpload, FunctionsOutlined, Redo } from '@material-ui/icons';
 import './App.css';
 
 const initialState: CalculationState = {
@@ -220,7 +209,7 @@ class App extends React.Component<CalculationProps, CalculationState> {
           aria-label="calculate"
           disabled={this.shouldInteractionBeDisabled(this.state.monthlyString) ? false : true}
           onClick={this.calculate}>
-          <FunctionsOutlinedIcon />
+          <FunctionsOutlined />
         </IconButton>
         </div>
         <div className="input-container">
@@ -244,14 +233,14 @@ class App extends React.Component<CalculationProps, CalculationState> {
           aria-label="calculate"
           disabled={this.shouldInteractionBeDisabled(this.state.amountFinancedString) ? false : true}
           onClick={this.calculate}>
-          <FunctionsOutlinedIcon />
+          <FunctionsOutlined />
         </IconButton>
         </div>
         <div className="input-container">
           <Button 
             variant="contained" 
             color="secondary" 
-            startIcon={<CloudUploadIcon />} 
+            startIcon={<CloudUpload />} 
             fullWidth
             disabled={!this.state.validCalculation || this.state.applicationLocked}
             onClick={this.submitApplication}>
@@ -262,7 +251,7 @@ class App extends React.Component<CalculationProps, CalculationState> {
           <Button 
             variant="contained" 
             color="primary" 
-            startIcon={<RedoIcon />} 
+            startIcon={<Redo />} 
             fullWidth
             disabled={!this.state.applicationLocked}
             onClick={this.resetApplication}>
